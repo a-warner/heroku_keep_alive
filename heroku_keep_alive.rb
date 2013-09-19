@@ -22,6 +22,10 @@ end.tap(&:parse!)
 config = YAML.load(File.read(run_opts[:config]))
 config.each_value {|o| o['url'] = URI(o['url']) }
 
+def log(msg)
+  print "[#{Time.now.utc.to_s.sub(' UTC', '')}] #{msg}\n"
+end
+
 threads = []
 config.each do |site, options|
   puts "Monitoring #{site} at #{options['url']}"
@@ -30,12 +34,12 @@ config.each do |site, options|
     loop do
       begin
         resp = Net::HTTP.get_response(options['url'])
-        print "Got a #{resp.code} from #{site}\n"
+        log "Got a #{resp.code} from #{site}"
       rescue Exception => e
-        print "Looks like #{site} may be down? Error was #{e.message}\n"
+        log "Looks like #{site} may be down? Error was #{e.message}"
       end
       sleep_time = (rand * run_opts[:sleep_time_interval]).round
-      print "Sleeping for #{sleep_time} seconds before trying #{site} again...\n"
+      log "Sleeping for #{sleep_time} seconds before trying #{site} again..."
       sleep sleep_time
     end
   end
